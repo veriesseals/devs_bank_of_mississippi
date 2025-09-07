@@ -49,14 +49,14 @@ def deposit(request):
             account = Account.objects.get(user=request.user, kind=form.cleaned_data["account"])
             amount = form.cleaned_data["amount"]
             with transaction.atomic():
-                account.balance = (account.balance + amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                account.balance = (account.balance + amount).quantize(Decimal("0.01"), rounding = ROUND_HALF_UP)
                 account.save()
                 Transaction.objects.create(
-                    user=request.user,
-                    account=account,          # Account instance
-                    tx_type=Transaction.DEPOSIT,
-                    amount=amount,            # Decimal amount 
-                    memo="Deposit",
+                    user = request.user,
+                    account = account,          # Account instance
+                    tx_type = Transaction.DEPOSIT,
+                    amount = amount,            # Decimal amount 
+                    memo = "Deposit",
                 )
             messages.success(request, "Deposit complete. Balance updated.")
             return redirect("dashboard")
@@ -82,11 +82,11 @@ def withdraw(request):
                     account.balance = (account.balance - amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                     account.save()
                     Transaction.objects.create(
-                        user=request.user,
-                        account=account,        # <-- add this ✅
-                        tx_type=Transaction.WITHDRAW,
-                        amount=amount,
-                        memo="Withdraw",
+                        user = request.user,
+                        account = account,        # <-- add this ✅
+                        tx_type = Transaction.WITHDRAW,
+                        amount = amount,
+                        memo = "Withdraw",
                     )
                 messages.success(request, "Withdraw complete. Balance updated.")
                 return redirect("dashboard")
