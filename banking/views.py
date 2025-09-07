@@ -49,7 +49,7 @@ def deposit(request):
             account = Account.objects.get(user = request.user, kind = form.cleaned_data["account"])
             amount = form.cleaned_data["amount"]
             with transaction.atomic():
-                account.balance = (acount.balance + amount).quantized(Decimal("0.01"))
+                account.balance = (account.balance + amount).quantized(Decimal("0.01"))
                 account.save()
                 Transaction.objects.create(user = request.user, tx_type=Transaction.DEPOSIT, account = amount, memo = "Deposit")
             messages.success(request, "Deposit complete. Balance updated.")
