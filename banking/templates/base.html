@@ -18,7 +18,11 @@
             <a class="btn btn-brand me-2" href="{% url 'withdraw' %}">Withdraw</a>
             <a class="btn btn-brand me-2" href="{% url 'transfer' %}">Transfer</a>
             <a class="btn btn-brand me-2" href="{% url 'ext-accounts' %}">External</a>
-            <a class="btn btn-outline-light" href="{% url 'logout' %}">Log out</a>
+            <!-- <a class="btn btn-outline-light" href="{% url 'logout' %}">Log out</a> -->
+            <form method="post" action="{% url 'logout' %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-light">Log out</button>
+            </form>
           {% else %}
             <a class="btn btn-brand" href="{% url 'login' %}">Log in</a>
             <a class="btn btn-brand" href="{% url 'register' %}">Register</a>
