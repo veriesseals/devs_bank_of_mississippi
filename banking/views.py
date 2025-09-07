@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
@@ -46,17 +46,24 @@ def deposit(request):
     if request.method == "POST":
         form = DepositWithdrawForm(request.POST)
         if form.is_valid():
-            account = Account.objects.get(user = request.user, kind = form.cleaned_data["account"])
+            account = Account.objects.get(user=request.user, kind=form.cleaned_data["account"])
             amount = form.cleaned_data["amount"]
             with transaction.atomic():
-                account.balance = (account.balance + amount).quantized(Decimal("0.01"))
+                account.balance = (account.balance + amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                 account.save()
-                Transaction.objects.create(user = request.user, tx_type=Transaction.DEPOSIT, account = amount, memo = "Deposit")
+                Transaction.objects.create(
+                    user=request.user,
+                    account=account,          # Account instance
+                    tx_type=Transaction.DEPOSIT,
+                    amount=amount,            # Decimal amount 
+                    memo="Deposit",
+                )
             messages.success(request, "Deposit complete. Balance updated.")
             return redirect("dashboard")
     else:
         form = DepositWithdrawForm()
     return render(request, "deposit.html", {"form": form})
+
 
 # Withdraw View
 # ----------------------------------------------------
@@ -66,20 +73,27 @@ def withdraw(request):
     if request.method == "POST":
         form = DepositWithdrawForm(request.POST)
         if form.is_valid():
-            account = Account.objects.get(user = request.user, kind = form.cleaned_data["account"])
+            account = Account.objects.get(user=request.user, kind=form.cleaned_data["account"])
             amount = form.cleaned_data["amount"]
             if account.balance < amount:
                 form.add_error("amount", "Insufficient funds!")
             else:
                 with transaction.atomic():
-                    account.balance = (account.balance - amount).quantize(Decimal("0.01"))
+                    account.balance = (account.balance - amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                     account.save()
-                    Transaction.objects.create(user = request.user, tx_type=Transaction.WITHDRAW, account = amount, memo = "Withdraw")
+                    Transaction.objects.create(
+                        user=request.user,
+                        account=account,        # <-- add this ✅
+                        tx_type=Transaction.WITHDRAW,
+                        amount=amount,
+                        memo="Withdraw",
+                    )
                 messages.success(request, "Withdraw complete. Balance updated.")
                 return redirect("dashboard")
     else:
         form = DepositWithdrawForm()
     return render(request, "withdraw.html", {"form": form})
+
 
 # Internal Transfer View
 # ----------------------------------------------------
@@ -87,27 +101,42 @@ def withdraw(request):
 @login_required
 def transfer(request):
     if request.method == "POST":
-        # Handle transfer form submission
-        # ----------------------------------------------------
         form = TransferForm(request.POST)
         if form.is_valid():
-            from_account = Account.objects.get(user = request.user, kind = form.cleaned_data["from_account"])
-            to_account = Account.objects.get(user = request.user, kind = form.cleaned_data["to_account"])
+            from_account = Account.objects.get(user=request.user, kind=form.cleaned_data["from_account"])
+            to_account   = Account.objects.get(user=request.user, kind=form.cleaned_data["to_account"])
             amount = form.cleaned_data["amount"]
             if from_account.balance < amount:
                 form.add_error("amount", "Insufficient funds!")
             else:
                 with transaction.atomic():
-                    from_account.balance = (from_account.balance - amount).quantize(Decimal("0.01"))
-                    to_account.balance = (to_account.balance + amount).quantize(Decimal("0.01"))
+                    from_account.balance = (from_account.balance - amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                    to_account.balance   = (to_account.balance + amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                     from_account.save()
                     to_account.save()
-                    Transaction.objects.create(user = request.user, tx_type=Transaction.TRANSFER, account = from_account, amount = amount, memo = f"Transfer to {to_account.kind}")
+
+                    # Outgoing transaction
+                    Transaction.objects.create(
+                        user=request.user,
+                        account=from_account,
+                        tx_type=Transaction.TRANSFER,
+                        amount=amount,
+                        memo=f"Transfer to {to_account.kind}",
+                    )
+                    # Incoming transaction (nice for history)
+                    Transaction.objects.create(
+                        user=request.user,
+                        account=to_account,
+                        tx_type=Transaction.TRANSFER,
+                        amount=amount,
+                        memo=f"Transfer from {from_account.kind}",
+                    )
                 messages.success(request, "Transfer complete. Balances updated.")
                 return redirect("dashboard")
     else:
         form = TransferForm()
     return render(request, "transfer.html", {"form": form, "title": "Transfer between your accounts"})
+
             
 
 # External Account Management View
@@ -132,25 +161,31 @@ def ext_accounts(request):
 # External Transfer View
 # ----------------------------------------------------
 @login_required
-
 def external_transfer(request):
     if request.method == "POST":
         form = ExternalTransferForm(request.user, request.POST)
         if form.is_valid():
-            from_account = Account.objects.get(user = request.user, kind = form.cleaned_data["from_account"])
+            from_account = Account.objects.get(user=request.user, kind=form.cleaned_data["from_account"])
             amount = form.cleaned_data["amount"]
             external_account = form.cleaned_data["external_id"]
             if from_account.balance < amount:
                 form.add_error("amount", "Insufficient funds!")
             else:
                 with transaction.atomic():
-                    from_account.balance = (from_account.balance - amount).quantize(Decimal("0.01"))
+                    from_account.balance = (from_account.balance - amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                     from_account.save()
-                    Transaction.objects.create(user = request.user, tx_type=Transaction.TRANSFER, account = from_account, amount = amount, memo = f"Transfer to external account {external_account}")
+                    Transaction.objects.create(
+                        user=request.user,
+                        account=from_account,
+                        tx_type=Transaction.TRANSFER,
+                        amount=amount,
+                        memo=f"Transfer to external account {external_account}",
+                    )
                 messages.success(request, "External transfer complete. Balance updated.")
                 return redirect("dashboard")
     else:
         form = ExternalTransferForm(request.user)
     return render(request, "transfer.html", {"form": form, "title": "Transfer to an external account"})
+
 
             
