@@ -83,5 +83,31 @@ def withdraw(request):
 
 # Internal Transfer View
 # ----------------------------------------------------
+
 @login_required
+def transfer_internal(request):
+    if request.method == "POST":
+        # Handle transfer form submission
+        # ----------------------------------------------------
+        form = TransferForm(request.POST)
+        if form.is_valid():
+            from_account = Account.objects.get(user = request.user, kind = form.cleaned_data["from_account"])
+            to_account = Account.objects.get(user = request.user, kind = form.cleaned_data["to_account"])
+            amount = form.cleaned_data["amount"]
+            if from_account.balance < amount:
+                form.add_error("amount", "Insufficient funds!")
+            else:
+                with transaction.atomic():
+                    from_account.balance = (from_account.balance - amount).quantize(Decimal("0.01"))
+                    to_account.balance = (to_account.balance + amount).quantize(Decimal("0.01"))
+                    from_account.save()
+                    to_account.save()
+                    Transaction.objects.create(user = request.user, tx_type=Transaction.TRANSFER, account = from_account, amount = amount, memo = f"Transfer to {to_account.kind}")
+                messages.success(request, "Transfer complete. Balances updated.")
+                return redirect("dashboard")
+    else:
+        form = TransferForm()
+    return render(request, "transfer.html", {"form": form, "title": "Transfer between your accounts"})
+            
+
             
