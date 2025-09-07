@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card p-4 shadow-sm">
+      <h5 class="text-muted">Checking</h5>
+      <div class="balance">${{ checking.balance }}</div>
+      <div class="mt-3">
+        <a href="{% url 'deposit' %}" class="btn btn-brand btn-sm me-2">Deposit</a>
+        <a href="{% url 'withdraw' %}" class="btn btn-outline-secondary btn-sm">Withdraw</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card p-4 shadow-sm">
+      <h5 class="text-muted">Savings</h5>
+      <div class="balance">${{ savings.balance }}</div>
+      <div class="mt-3">
+        <a href="{% url 'transfer' %}" class="btn btn-brand btn-sm">Transfer</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card p-4 shadow-sm mt-4">
+  <h5 class="mb-3">Recent activity</h5>
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead><tr><th>Date</th><th>Type</th><th>Account</th><th>Amount</th><th>Memo</th></tr></thead>
+      <tbody>
+        {% for t in txs %}
+          <tr>
+            <td>{{ t.created_at|date:"Y-m-d H:i" }}</td>
+            <td>{{ t.tx_type }}</td>
+            <td>{{ t.account.kind }}</td>
+            <td>${{ t.amount }}</td>
+            <td>{{ t.memo }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5">No transactions yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+:root {
+    --brand:#0047ab;      /* cobalt blue */
+    --brand-dark:#00398a;
+    --bg:#f6f8fb;
+}
+
+body{ 
+    background:var(--bg); }
+
+.navbar{
+    background:var(--brand); 
+}
+
+.navbar a, .navbar-brand {
+    color:#fff !important; 
+}
+
+.btn-brand{
+    background:var(--brand); color:#fff; border:none;
+}
+
+.btn-brand:hover { 
+    background:var(--brand-dark); color:#fff; }
+
+.card {
+    border-radius:16px; }
+
+.balance { 
+    font-size:2rem; font-weight:700; 
+}

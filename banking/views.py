@@ -85,7 +85,7 @@ def withdraw(request):
 # ----------------------------------------------------
 
 @login_required
-def transfer_internal(request):
+def transfer(request):
     if request.method == "POST":
         # Handle transfer form submission
         # ----------------------------------------------------
@@ -133,7 +133,7 @@ def ext_accounts(request):
 # ----------------------------------------------------
 @login_required
 
-def transfer_external(request):
+def external_transfer(request):
     if request.method == "POST":
         form = ExternalTransferForm(request.user, request.POST)
         if form.is_valid():

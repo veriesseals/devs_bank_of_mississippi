@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card p-4 shadow-sm">
+      <h4 class="mb-3">Link an external account</h4>
+      <form method="post">{% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-brand w-100">Save</button>
+      </form>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card p-4 shadow-sm">
+      <h4 class="mb-3">Your external accounts</h4>
+      <ul class="list-group">
+        {% for i in items %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ i }}
+          </li>
+        {% empty %}
+          <li class="list-group-item">None yet.</li>
+        {% endfor %}
+      </ul>
+      <a class="btn btn-outline-secondary mt-3" href="{% url 'transfer-external' %}">Send to external bank</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
