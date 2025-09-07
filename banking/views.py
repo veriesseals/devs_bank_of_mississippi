@@ -151,7 +151,7 @@ def ext_accounts(request):
             ext_account.user = request.user
             ext_account.save()
             messages.success(request, "External account added.")
-            return redirect("ext_accounts")
+            return redirect("ext-accounts")
     else:
         form = ExternalAccountForm()
         items = ExternalAccount.objects.filter(user = request.user)
