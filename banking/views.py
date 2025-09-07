@@ -110,4 +110,47 @@ def transfer_internal(request):
     return render(request, "transfer.html", {"form": form, "title": "Transfer between your accounts"})
             
 
+# External Account Management View
+# ----------------------------------------------------
+@login_required
+
+def ext_accounts(request):
+    if request.method == "POST":
+        form = ExternalAccountForm(request.POST)
+        if form.is_valid():
+            ext_account = form.save(commit = False)
+            ext_account.user = request.user
+            ext_account.save()
+            messages.success(request, "External account added.")
+            return redirect("ext_accounts")
+    else:
+        form = ExternalAccountForm()
+        items = ExternalAccount.objects.filter(user = request.user)
+    return render(request, "external_accounts.html", {"form": form, "items": items})
+
+
+# External Transfer View
+# ----------------------------------------------------
+@login_required
+
+def transfer_external(request):
+    if request.method == "POST":
+        form = ExternalTransferForm(request.user, request.POST)
+        if form.is_valid():
+            from_account = Account.objects.get(user = request.user, kind = form.cleaned_data["from_account"])
+            amount = form.cleaned_data["amount"]
+            external_account = form.cleaned_data["external_id"]
+            if from_account.balance < amount:
+                form.add_error("amount", "Insufficient funds!")
+            else:
+                with transaction.atomic():
+                    from_account.balance = (from_account.balance - amount).quantize(Decimal("0.01"))
+                    from_account.save()
+                    Transaction.objects.create(user = request.user, tx_type=Transaction.TRANSFER, account = from_account, amount = amount, memo = f"Transfer to external account {external_account}")
+                messages.success(request, "External transfer complete. Balance updated.")
+                return redirect("dashboard")
+    else:
+        form = ExternalTransferForm(request.user)
+    return render(request, "transfer.html", {"form": form, "title": "Transfer to an external account"})
+
             
