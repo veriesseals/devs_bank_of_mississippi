@@ -1,8 +1,0 @@
-{
-    "cSpell.words": [
-        "dotenv",
-        "fubs",
-        "vtsz"
-    ],
-    "python-envs.defaultEnvManager": "ms-python.python:venv"
-}
